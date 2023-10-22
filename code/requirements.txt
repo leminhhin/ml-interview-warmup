@@ -1,0 +1,5 @@
+modal
+beautifulsoup4
+pinecone_client
+sentence-transformers
+langchain
