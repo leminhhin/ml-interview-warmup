@@ -4,16 +4,12 @@ import requests
 st.title("ML Interview Warmup")
 
 
-# data = {"name": "Erik", "qty": 10}
-# requests.post("https://ecorp--web-demo-f-dev.modal.run", json=data, timeout=10.0)
-
-
 def generate_qna(data):
-    response = requests.get('https://leminhhin--lambda-func-py-generate-qna-dev.modal.run', json=data, timeout=30.0)
+    response = requests.get('https://leminhhin--ml-interview-warmup-lambda-funcs-generate-qna.modal.run/', json=data, timeout=30.0)
     return response.json()
 
 def evaluate_answer(data):
-    response = requests.get('https://leminhhin--lambda-func-py-evaluate-answer-dev.modal.run', json=data, timeout=30.0)
+    response = requests.get('https://leminhhin--ml-interview-warmup-lambda-funcs-evaluate-answer.modal.run', json=data, timeout=30.0)
     return response.json()
 
 if 'topic_submitted' not in st.session_state:
