@@ -32,19 +32,12 @@ def generate_qna(item: TopicRequest):
     from langchain.chat_models import ChatCohere
     from langchain.output_parsers import PydanticOutputParser
     from langchain.prompts import PromptTemplate
-    from langchain.pydantic_v1 import BaseModel, Field, validator
+    from langchain.pydantic_v1 import BaseModel, Field
 
     # Define desired data structure for LLM output.
     class QnA(BaseModel):
         question: str = Field(description="question about a topic")
         answer: str = Field(description="answer for the question")
-
-        # You can add custom validation logic easily with Pydantic.
-        @validator('question', allow_reuse=True)
-        def question_ends_with_question_mark(cls, field):
-            if field[-1] != '?':
-                raise ValueError("Badly formed question!")
-            return field
 
     def get_retriever_from_vectorstore():
         PINECONE_API_KEY = os.environ['PINECONE_API_KEY']
@@ -69,11 +62,11 @@ def generate_qna(item: TopicRequest):
         # Set up a parser + inject instructions into the prompt template.
         parser = PydanticOutputParser(pydantic_object=QnA)
 
-        template = """Topic: {user_topic}
-        Context: {context}
-
-        Based on the context above, generate a question and answer pair about the topic.
+        template = """Act as an interviewer preparing for an interview on a topic. Based on the context provided, come up with a question that assesses the interviewee's knowledge and understanding of the key aspects of this topic. The question should require the interviewee to demonstrate strong reasoning skills and a comprehensive understanding of the topic in order to answer correctly. Also provide an exemplary answer to the question you came up with. Your answer should be comprehensive, fully address all relevant aspects of the topic with strong reasoning, and demonstrate deep understanding.
         {format_instructions}
+
+        Topic: {user_topic}
+        Context: {context}
         """
 
         prompt = PromptTemplate(
@@ -87,7 +80,7 @@ def generate_qna(item: TopicRequest):
 
     retriever = get_retriever_from_vectorstore()
     prompt, parser = get_prompt_template_and_parser()
-    model = ChatCohere()
+    model = ChatCohere(temperature=1)
     chain = prompt | model | parser
 
     user_topic = item.topic
@@ -120,20 +113,22 @@ def evaluate_answer(item: EvaluationRequest):
         # Set up a parser + inject instructions into the prompt template.
         parser = PydanticOutputParser(pydantic_object=AnswerEvaluation)
 
-        template = """Topic: {user_topic}
-        Question: {question}
-        Examiner's answer: {examiner_answer}
-        User's answer: {user_answer}
-
-        Please act as an examiner and objectively rate the user's answer on the following 1-5 scale:
-        - 1: Completely incorrect, irrelevant, or blank answer
-        - 2: Demonstrates very limited understanding; major gaps in knowledge and logic
-        - 3: Partial knowledge and major errors or omissions in reasoning
-        - 4: Accurate but incomplete, with minor errors or omissions; lacks depth
-        - 5: Accurate, reasonably complete, and demonstrates solid understanding
-
-        Based on the question, examiner's answer and user's answer above, objectively provide a score between 1-5 for the user and a short justification explaining the score:
+        template = """Act as an examiner and assess the interviewee's answer on the following 1-5 scale:
+            - Score 1: Completely incorrect, irrelevant, or blank answer
+            - Score 2: Major gaps in knowledge compared to interviewer's answer
+            - Score 3: Significant errors or omissions vs. interviewer's answer
+            - Score 4: Lacks depth and minor errors compared to interviewer's answer
+            - Score 5: Demonstrates solid understanding on par with interviewer's answer
+        Provide a score between 1-5. Justify your rating by:
+            - Comparing the interviewee's answer to the exemplary interviewer's answer
+            - Explaining how well the interviewee's answer meets the scoring criteria standards
+            - Providing specific examples of gaps, errors, or lack of depth if scoring low
         {format_instructions}
+        
+        Topic: {user_topic}
+        Question: {question}
+        Interviewer's answer: {examiner_answer}
+        Interviewee's answer: {user_answer}
         """
 
         prompt = PromptTemplate(
