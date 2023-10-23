@@ -1,7 +1,7 @@
 from modal import Stub, Image, Secret, web_endpoint
 from pydantic import BaseModel
 
-stub = Stub()
+stub = Stub('ml-interview-warmup-lambda-funcs')
 CACHE_PATH = "/root/model_cache"
 
 def download_model_weights() -> None:
