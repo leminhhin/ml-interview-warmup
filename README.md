@@ -7,11 +7,11 @@ ML Interview Warmup is a retrieval augmented generation (RAG) based LLM web appl
 The main components are:
 
 - Modal serverless functions that handle request logic
-- Pinecone vector database storing embeddings of ML books
 - Cohere LLM API for question generation and scoring
+- Arxiv API for retrieving relevant papers
 - Frontend hosted on Streamlit for UI
 
-![alt text](asset/ml-interview.png "System Diagram")
+![alt text](asset/system-diagram.png "System Diagram")
 
 ## Usage
 
